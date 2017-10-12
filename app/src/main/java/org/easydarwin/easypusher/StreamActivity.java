@@ -108,7 +108,7 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
             mNeedGrantedPermission = true;
             return;
         } else {
-            goonWithPermissionGranted();
+            // resume..
         }
     }
 
@@ -353,6 +353,12 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
         spnResolution.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (mMediaStream != null && mMediaStream.isStreaming()){
+                    int pos = listResolution.indexOf(String.format("%dx%d", width, height));
+                    spnResolution.setSelection(pos, false);
+                    Toast.makeText(StreamActivity.this,"正在推送中,无法切换分辨率",Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 String r = listResolution.get(position);
                 String[] splitR = r.split("x");
 
@@ -363,7 +369,6 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
                     height = ht;
                     if (mMediaStream != null) {
                         mMediaStream.updateResolution(width, height);
-                        mMediaStream.reStartStream();
                     }
                 }
             }
@@ -566,10 +571,6 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
 
     @Override
     protected void onDestroy() {
-        if (!mNeedGrantedPermission) {
-            unbindService(conn);
-            handler.removeCallbacksAndMessages(null);
-        }
         BUS.unregister(this);
         super.onDestroy();
     }
@@ -603,7 +604,6 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
                 public void onClick(DialogInterface dialogInterface, int i) {
                     PreferenceManager.getDefaultSharedPreferences(StreamActivity.this).edit().putBoolean("background_camera_alert", true).apply();
                     StreamActivity.super.onBackPressed();
-                    Toast.makeText(StreamActivity.this, "正在后台采集并上传。", Toast.LENGTH_SHORT).show();
                 }
             }).setPositiveButton("退出程序", new DialogInterface.OnClickListener() {
                 @Override
@@ -673,32 +673,45 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        boolean isStreaming = mMediaStream != null && mMediaStream.isStreaming();
-        mMediaStream.stopPreview();
-        if (isFinishing()) {
-            if (isStreaming && PreferenceManager.getDefaultSharedPreferences(StreamActivity.this)
-                    .getBoolean("key_enable_background_camera", true)) {
-                // active background streaming
-                mService.activePreview();
-            } else {
-                mMediaStream.stopStream();
-                mMediaStream.release();
-                mMediaStream = null;
-
-                stopService(new Intent(this, BackgroundCameraService.class));
-            }
-        } else {
-            if (isStreaming) {
-                // active background streaming
-                mService.activePreview();
-            }
-        }
         return true;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
 
+    }
+
+
+    @Override
+    protected void onPause() {
+        if (!mNeedGrantedPermission) {
+            unbindService(conn);
+            handler.removeCallbacksAndMessages(null);
+        }
+        boolean isStreaming = mMediaStream != null && mMediaStream.isStreaming();
+        mMediaStream.stopPreview();
+        if (isStreaming && PreferenceManager.getDefaultSharedPreferences(StreamActivity.this)
+                .getBoolean("key_enable_background_camera", true)) {
+            // active background streaming
+
+            Toast.makeText(StreamActivity.this, "正在后台采集并上传。", Toast.LENGTH_SHORT).show();
+            mService.activePreview();
+        } else {
+            mMediaStream.stopStream();
+            mMediaStream.release();
+            mMediaStream = null;
+
+            stopService(new Intent(this, BackgroundCameraService.class));
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!mNeedGrantedPermission){
+            goonWithPermissionGranted();
+        }
     }
 
     public void onRecord(View view) {
@@ -712,5 +725,9 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
                 ib.setImageResource(R.drawable.ic_action_recording);
             }
         }
+    }
+
+    public void onClickResolution(View view) {
+        findViewById(R.id.spn_resolution).performClick();
     }
 }

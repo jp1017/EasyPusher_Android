@@ -431,8 +431,8 @@ public class MediaStream {
             }
         }
         // TODO: 17-10-12 上午9:17 添加音频
-        /*audioStream = new AudioStream(mEasyPusher);
-        audioStream.startRecord();*/
+        audioStream = new AudioStream(mEasyPusher);
+        audioStream.startRecord();
     }
 
     @Provides

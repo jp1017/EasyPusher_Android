@@ -127,16 +127,27 @@ public class AudioStream {
                             e.printStackTrace();
                         }
                     }
-                    if (mAudioRecord != null) {
-                        mAudioRecord.stop();
-                        mAudioRecord.release();
-                        mAudioRecord = null;
+
+                    try {
+                        if (mAudioRecord != null) {
+                            mAudioRecord.stop();
+                            mAudioRecord.release();
+                            mAudioRecord = null;
+                        }
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
                     }
-                    if (mMediaCodec != null) {
-                        mMediaCodec.stop();
-                        mMediaCodec.release();
-                        mMediaCodec = null;
+
+                    try {
+                        if (mMediaCodec != null) {
+                            mMediaCodec.stop();
+                            mMediaCodec.release();
+                            mMediaCodec = null;
+                        }
+                    } catch (Throwable ex) {
+                        ex.printStackTrace();
                     }
+
                 }
             }
         }, "AACRecoder");
@@ -186,9 +197,8 @@ public class AudioStream {
                     addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
                     mBuffer.flip();
                     easyPusher.push(mBuffer.array(), 0, mBufferInfo.size + 7, mBufferInfo.presentationTimeUs / 1000, 0);
-                    if (BuildConfig.DEBUG) {
+                    if (BuildConfig.DEBUG)
                         Log.i(TAG, String.format("push audio stamp:%d", mBufferInfo.presentationTimeUs / 1000));
-                    }
                     mMediaCodec.releaseOutputBuffer(index, false);
                 } else if (index == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     mBuffers = mMediaCodec.getOutputBuffers();
