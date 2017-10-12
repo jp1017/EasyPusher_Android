@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion '25.0.2'
+    compileSdkVersion 25
+    buildToolsVersion '25.0.3'
 
     defaultConfig {
         applicationId "org.easydarwin.easypusher"
         minSdkVersion 16
-        targetSdkVersion 22 // 确保在后台预览时不崩溃。。。
+        targetSdkVersion 25 // 确保在后台预览时不崩溃。。。
         versionCode 21
         versionName "1.3.17.0721"
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
@@ -24,20 +24,18 @@ android {
     productFlavors {
         rtsp {
             applicationId "org.easydarwin.easypusher"
-            if (project.hasProperty('RTMP_KEY'))
-            {
+            if (project.hasProperty('RTMP_KEY')) {
                 buildConfigField 'String', 'RTMP_KEY', RTMP_KEY
-            }else{
+            } else {
                 /*
                 *本Key为3个月临时授权License，如需商业使用，请邮件至support@easydarwin.org申请此产品的授权。
                 */
                 buildConfigField 'String', 'RTMP_KEY', "\"\""
             }
 
-            if (project.hasProperty('RTSP_KEY'))
-            {
+            if (project.hasProperty('RTSP_KEY')) {
                 buildConfigField 'String', 'RTSP_KEY', RTSP_KEY
-            }else{
+            } else {
                 /*
                 *本Key为3个月临时授权License，如需商业使用，请邮件至support@easydarwin.org申请此产品的授权。
                 */
@@ -48,7 +46,7 @@ android {
 
     android.applicationVariants.all { variant ->
         def file = variant.outputs[0].outputFile
-        variant.outputs[0].outputFile = new File(file.parent, file.name.replace(".apk", "-" + defaultConfig.versionCode + "-" + defaultConfig.versionName+".apk"))
+        variant.outputs[0].outputFile = new File(file.parent, file.name.replace(".apk", "-" + defaultConfig.versionCode + "-" + defaultConfig.versionName + ".apk"))
     }
 }
 
@@ -60,24 +58,31 @@ repositories {
     mavenCentral()
 }
 
+// http://blog.csdn.net/pyfysf/article/details/77894331
+configurations.all {
+    resolutionStrategy.force 'com.android.support:support-annotations:25.3.1'
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile(name: 'update-release', ext: 'aar')
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.+'
-    compile 'com.android.support:support-v4:23.+'
-    compile 'com.android.support:preference-v7:23.4.0'
-    compile 'com.android.support:design:23.4.0'
-    compile 'com.squareup.okhttp3:okhttp:3.4.1'
-    compile 'com.android.support.constraint:constraint-layout:+'
-    compile 'com.github.bumptech.glide:glide:3.7.0'
+//    compile 'com.android.support:support-annotations:25.3.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:preference-v7:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:cardview-v7:25.3.1'
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.github.bumptech.glide:glide:4.1.1'
     compile 'com.umeng.analytics:analytics:latest.integration'
-    compile 'com.android.support:cardview-v7:23.4.0'
     compile 'com.github.chrisbanes:PhotoView:1.3.0'
     compile 'com.squareup:otto:1.3.8'
-    compile 'com.google.dagger:dagger:2.11-rc2'
-    annotationProcessor 'com.google.dagger:dagger-compiler:2.11-rc2'
+    compile 'com.google.dagger:dagger:2.11'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.11'
     androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     }
+    compile 'com.google.code.gson:gson:2.8.1'
 }

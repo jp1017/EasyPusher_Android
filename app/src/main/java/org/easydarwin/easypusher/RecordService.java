@@ -22,7 +22,6 @@ import android.view.WindowManager;
 
 import org.easydarwin.easyrtmp.push.EasyRTMP;
 import org.easydarwin.push.EasyPusher;
-import org.easydarwin.push.InitCallback;
 import org.easydarwin.push.Pusher;
 
 import java.io.IOException;
@@ -31,7 +30,7 @@ import java.nio.ByteBuffer;
 
 public class RecordService extends Service {
 
-    private static final String TAG = "RService";
+    private static final String TAG = "RecordService";
     private String mVideoPath;
     private MediaProjectionManager mMpmngr;
     private MediaProjection mMpj;
@@ -46,10 +45,9 @@ public class RecordService extends Service {
     private WindowManager wm;
 
 
-
     private MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
 
-    static Pusher mEasyPusher;
+    static Pusher sEasyPusher;
     private Thread mPushThread;
     private byte[] mPpsSps;
 
@@ -98,27 +96,29 @@ public class RecordService extends Service {
         wm.getDefaultDisplay().getMetrics(displayMetrics);
         screenDensity = displayMetrics.densityDpi;
 
-        while (windowWidth > 480){
+        while (windowWidth > 480) {
             windowWidth /= 2;
-            windowHeight /=2;
+            windowHeight /= 2;
         }
     }
 
     private void startPush() {
         if (mPushThread != null) return;
-        mPushThread = new Thread(){
+        mPushThread = new Thread() {
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void run() {
                 String url = null;
-                if (EasyApplication.isRTMP()) {mEasyPusher = new EasyRTMP();
+                if (EasyApplication.isRTMP()) {
+                    sEasyPusher = new EasyRTMP();
                     url = EasyApplication.getEasyApplication().getUrl() + "_s";
-                    mEasyPusher.initPush(url, getApplicationContext(), null);
-                }else{mEasyPusher = new EasyPusher();
+                    sEasyPusher.initPush(url, getApplicationContext(), null);
+                } else {
+                    sEasyPusher = new EasyPusher();
                     String ip = EasyApplication.getEasyApplication().getIp();
                     String port = EasyApplication.getEasyApplication().getPort();
                     String id = EasyApplication.getEasyApplication().getId();
-                    mEasyPusher.initPush(ip,port,String.format("%s_s.sdp", id),getApplicationContext(), null);
+                    sEasyPusher.initPush(ip, port, String.format("%s_s.sdp", id), getApplicationContext(), null);
                 }
 
                 while (mPushThread != null) {
@@ -139,8 +139,8 @@ public class RecordService extends Service {
                         byte[] outData = new byte[mBufferInfo.size];
                         outputBuffer.get(outData);
 
-//                        String data0 = String.format("%x %x %x %x %x %x %x %x %x %x ", outData[0], outData[1], outData[2], outData[3], outData[4], outData[5], outData[6], outData[7], outData[8], outData[9]);
-//                        Log.e("out_data", data0);
+                        String data0 = String.format("%x %x %x %x %x %x %x %x %x %x ", outData[0], outData[1], outData[2], outData[3], outData[4], outData[5], outData[6], outData[7], outData[8], outData[9]);
+                        Log.w(TAG, "out_data: " + data0);
 
                         //记录pps和sps
                         int type = outData[4] & 0x07;
@@ -156,7 +156,7 @@ public class RecordService extends Service {
                             }
                         }
 
-                        mEasyPusher.push(outData, mBufferInfo.presentationTimeUs/1000, 1);
+                        sEasyPusher.push(outData, mBufferInfo.presentationTimeUs / 1000, 1);
 
 
                         mMediaCodec.releaseOutputBuffer(index, false);
@@ -171,9 +171,9 @@ public class RecordService extends Service {
 
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void stopPush(){
+    private void stopPush() {
         Thread t = mPushThread;
-        if (t != null){
+        if (t != null) {
             mPushThread = null;
             try {
                 t.join();
@@ -181,8 +181,8 @@ public class RecordService extends Service {
                 e.printStackTrace();
             }
         }
-        mEasyPusher.stop();
-        mEasyPusher = null;
+        sEasyPusher.stop();
+        sEasyPusher = null;
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -194,7 +194,7 @@ public class RecordService extends Service {
         }
         if (mMpj == null) return;
         mVirtualDisplay = mMpj.createVirtualDisplay("record_screen", windowWidth, windowHeight, screenDensity,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR|DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC|DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION, mSurface, null, null);
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION, mSurface, null, null);
     }
 
 
@@ -226,7 +226,6 @@ public class RecordService extends Service {
     }
 
 
-
     @TargetApi(Build.VERSION_CODES.KITKAT)
     private void release() {
 
@@ -236,7 +235,7 @@ public class RecordService extends Service {
             mMediaCodec.release();
             mMediaCodec = null;
         }
-        if (mSurface != null){
+        if (mSurface != null) {
             mSurface.release();
         }
         if (mVirtualDisplay != null) {

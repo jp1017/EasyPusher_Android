@@ -2,7 +2,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"><LinearLayout
+    android:layout_height="match_parent">
+
+    <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -11,18 +13,18 @@
 
 
     <LinearLayout
+        android:id="@+id/rtsp_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/rtsp_group"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="visible">
 
         <EditText
             android:id="@+id/edt_server_address"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="EasyDarwin地址"
-            android:text="114.55.107.180"
+            android:text="video.qdsxkj.com"
             android:textColorHint="#80000000" />
 
         <EditText
@@ -30,13 +32,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="EasyDarwin端口（默认554）"
-            android:text="554"
+            android:text="10554"
             android:textColorHint="#80000000" />
 
         <EditText
             android:id="@+id/edt_stream_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="107700000088_11"
             android:hint="摄像头直播流ID"
             android:textColorHint="#80000000" />
 
@@ -49,9 +52,9 @@
     </LinearLayout>
 
     <EditText
+        android:id="@+id/rtmp_url"
         android:layout_width="match_parent"
         android:text=""
-        android:id="@+id/rtmp_url"
         android:layout_height="wrap_content" />
 
     <CheckBox
@@ -112,5 +115,7 @@
         android:layout_height="48dp"
         android:text="保存" />
 
-</LinearLayout></ScrollView>
+</LinearLayout>
+
+</ScrollView>
 

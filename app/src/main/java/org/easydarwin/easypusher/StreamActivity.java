@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
-import android.media.Image;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -53,7 +52,6 @@ import org.easydarwin.util.Util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.Manifest;
 
 import static org.easydarwin.easypusher.EasyApplication.BUS;
 import static org.easydarwin.update.UpdateMgr.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE;
@@ -65,13 +63,13 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
     public static final int REQUEST_CAMERA_PERMISSION = 1003;
 
     //默认分辨率
-    int width = 640, height = 480;
+    int width = 320, height = 240;
     Button btnSwitch;
     Button btnSetting;
     TextView txtStreamAddress;
     ImageButton btnSwitchCemera;
     Spinner spnResolution;
-    List<String> listResolution = new ArrayList<String>();
+    List<String> listResolution = new ArrayList<>();
     MediaStream mMediaStream;
     TextView txtStatus, streamStat;
     static Intent mResultIntent;
@@ -140,7 +138,7 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
         }
 
         Button button = (Button) findViewById(R.id.push_screen);
-        if (RecordService.mEasyPusher != null) {
+        if (RecordService.sEasyPusher != null) {
             button.setText("停止推送屏幕");
             TextView viewById = (TextView) findViewById(R.id.push_screen_url);
             if (EasyApplication.isRTMP()) {
@@ -294,17 +292,20 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
         }
 
         if (!PreferenceManager.getDefaultSharedPreferences(this).getBoolean("alert_screen_background_pushing", false)) {
-            new AlertDialog.Builder(this).setTitle("提醒").setMessage("屏幕直播将要开始,直播过程中您可以切换到其它屏幕。不过记得直播结束后,再进来停止直播哦!").setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    PreferenceManager.getDefaultSharedPreferences(StreamActivity.this).edit().putBoolean("alert_screen_background_pushing", true).apply();
-                    onPushScreen(view);
-                }
-            }).show();
+            new AlertDialog.Builder(this)
+                    .setTitle("提醒")
+                    .setMessage("屏幕直播将要开始,直播过程中您可以切换到其它屏幕。不过记得直播结束后,再进来停止直播哦!")
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            PreferenceManager.getDefaultSharedPreferences(StreamActivity.this).edit().putBoolean("alert_screen_background_pushing", true).apply();
+                            onPushScreen(view);
+                        }
+                    }).show();
             return;
         }
         Button button = (Button) findViewById(R.id.push_screen);
-        if (RecordService.mEasyPusher != null) {
+        if (RecordService.sEasyPusher != null) {
             Intent intent = new Intent(getApplicationContext(), RecordService.class);
             stopService(intent);
 
@@ -321,6 +322,8 @@ public class StreamActivity extends AppCompatActivity implements View.OnClickLis
     private static final int MSG_STATE = 1;
 
     private void sendMessage(String message) {
+        Log.w(TAG, "消息: " + message);
+
         Message msg = Message.obtain();
         msg.what = MSG_STATE;
         Bundle bundle = new Bundle();

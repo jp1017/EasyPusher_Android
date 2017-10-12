@@ -21,7 +21,8 @@ import java.nio.ByteBuffer;
  * Created by apple on 2017/5/13.
  */
 public class HWConsumer extends Thread implements VideoConsumer {
-    private static final String TAG = "Pusher";
+    private static final String TAG = "HWConsumer";
+
     public EasyMuxer mMuxer;
     private final Context mContext;
     private final Pusher mPusher;
@@ -114,12 +115,12 @@ public class HWConsumer extends Thread implements VideoConsumer {
             } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 synchronized (HWConsumer.this) {
                     newFormat = mMediaCodec.getOutputFormat();
-                    EasyMuxer muxer = mMuxer;
+                    /*EasyMuxer muxer = mMuxer;
                     if (muxer != null) {
                         // should happen before receiving buffers, and should only happen once
 
                         muxer.addTrack(newFormat, true);
-                    }
+                    }*/
                 }
             } else if (outputBufferIndex < 0) {
                 // let's ignore it
@@ -132,10 +133,10 @@ public class HWConsumer extends Thread implements VideoConsumer {
                 }
                 outputBuffer.position(bufferInfo.offset);
                 outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
-                EasyMuxer muxer = mMuxer;
+                /*EasyMuxer muxer = mMuxer;
                 if (muxer != null) {
                     muxer.pumpStream(outputBuffer, bufferInfo, true);
-                }
+                }*/
 
                 boolean sync = false;
                 if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {// sps
@@ -160,14 +161,13 @@ public class HWConsumer extends Thread implements VideoConsumer {
                     outputBuffer.get(h264, mPpsSps.length, bufferInfo.size);
                     mPusher.push(h264, 0, mPpsSps.length + bufferInfo.size, bufferInfo.presentationTimeUs / 1000, 1);
                     if (BuildConfig.DEBUG)
-                        Log.i(TAG, String.format("push i video stamp:%d", bufferInfo.presentationTimeUs / 1000));
+                        Log.w(TAG, String.format("push i video stamp:%d", bufferInfo.presentationTimeUs / 1000));
                 } else {
                     outputBuffer.get(h264, 0, bufferInfo.size);
                     mPusher.push(h264, 0, bufferInfo.size, bufferInfo.presentationTimeUs / 1000, 1);
                     if (BuildConfig.DEBUG)
-                        Log.i(TAG, String.format("push video stamp:%d", bufferInfo.presentationTimeUs / 1000));
+                        Log.w(TAG, String.format("push video stamp:%d", bufferInfo.presentationTimeUs / 1000));
                 }
-
 
                 mMediaCodec.releaseOutputBuffer(outputBufferIndex, false);
             }
@@ -215,18 +215,20 @@ Video frame rate 20 fps 30 fps 30 fps 30 fps
 Video bitrate 384 Kbps 2 Mbps 4 Mbps 10 Mbps
         */
         int framerate = 20;
-//        if (width == 640 || height == 640) {
-//            bitrate = 2000000;
-//        } else if (width == 1280 || height == 1280) {
-//            bitrate = 4000000;
-//        } else {
-//            bitrate = 2 * width * height;
-//        }
 
         int bitrate = (int) (mWidth * mHeight * 20 * 2 * 0.05f);
-        if (mWidth >= 1920 || mHeight >= 1920) bitrate *= 0.3;
-        else if (mWidth >= 1280 || mHeight >= 1280) bitrate *= 0.4;
-        else if (mWidth >= 720 || mHeight >= 720) bitrate *= 0.6;
+        if (mWidth >= 1920 || mHeight >= 1920) {
+
+            bitrate *= 0.3;
+        } else {
+            if (mWidth >= 1280 || mHeight >= 1280) {
+                bitrate *= 0.4;
+            } else {
+                if (mWidth >= 720 || mHeight >= 720) {
+                    bitrate *= 0.6;
+                }
+            }
+        }
         EncoderDebugger debugger = EncoderDebugger.debug(mContext, mWidth, mHeight);
         mVideoConverter = debugger.getNV21Convertor();
         mMediaCodec = MediaCodec.createByCodecName(debugger.getEncoderName());

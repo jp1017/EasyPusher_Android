@@ -4,10 +4,9 @@ import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.camera2.params.LensShadingMap;
 import android.media.MediaCodec;
-import android.media.MediaFormat;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -16,7 +15,6 @@ import android.os.Process;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.SurfaceHolder;
 
 import org.easydarwin.audio.AudioStream;
 import org.easydarwin.bus.SupportResolution;
@@ -28,7 +26,6 @@ import org.easydarwin.hw.NV21Convertor;
 import org.easydarwin.muxer.EasyMuxer;
 import org.easydarwin.sw.JNIUtil;
 import org.easydarwin.sw.TxtOverlay;
-import org.easydarwin.sw.X264Encoder;
 import org.easydarwin.util.Util;
 
 import java.io.File;
@@ -38,12 +35,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import dagger.Module;
 import dagger.Provides;
@@ -85,9 +81,11 @@ public class MediaStream {
     public MediaStream(Context context, SurfaceTexture texture, boolean enableVideo) {
         mApplicationContext = context;
         mSurfaceHolderRef = new WeakReference(texture);
-        if (EasyApplication.isRTMP())
+        if (EasyApplication.isRTMP()) {
             mEasyPusher = new EasyRTMP();
-        else mEasyPusher = new EasyPusher();
+        } else {
+            mEasyPusher = new EasyPusher();
+        }
         mCameraThread = new HandlerThread("CAMERA"){
             public void run(){
                 try{
@@ -119,6 +117,9 @@ public class MediaStream {
                         return;
                     }
                     Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
+                    /*Log.w(TAG, "previewSize w: " + previewSize.width + ", h: " + previewSize.height
+                            + ", len: " + data.length + ", " + Arrays.toString(data));*/
+
                     if (data.length != previewSize.width * previewSize.height * 3 / 2) {
                         mCamera.addCallbackBuffer(data);
                         return;
@@ -137,10 +138,13 @@ public class MediaStream {
                         }
                         save2file(data, String.format("/sdcard/yuv_%d_%d.yuv", previewSize.height, previewSize.width));
                     }
+
                     if (PreferenceManager.getDefaultSharedPreferences(mApplicationContext).getBoolean("key_enable_video_overlay", false)) {
                         String txt = String.format("drawtext=fontfile=" + mApplicationContext.getFileStreamPath("SIMYOU.ttf") + ": text='%s%s':x=(w-text_w)/2:y=H-60 :fontcolor=white :box=1:boxcolor=0x00000000@0.3", "EasyPusher", new SimpleDateFormat("yyyy-MM-ddHHmmss").format(new Date()));
-                        txt = "EasyPusher " + new SimpleDateFormat("yy-MM-dd HH:mm:ss SSS").format(new Date());
+                        txt = new SimpleDateFormat("yy-MM-dd HH:mm:ss").format(new Date());
+                        //todo 添加水印
                         overlay.overlay(data, txt);
+//                        Log.w(TAG, "previewSize: 添加水印后len: " + data.length + "数据: " + Arrays.toString(data));
                     }
                     mVC.onVideo(data, previewFormat);
                     mCamera.addCallbackBuffer(data);
@@ -216,9 +220,6 @@ public class MediaStream {
             mSWCodec = PreferenceManager.getDefaultSharedPreferences(mApplicationContext).getBoolean("key-sw-codec", false);
             mCamera = Camera.open(mCameraId);
 
-
-
-
             Camera.Parameters parameters = mCamera.getParameters();
             int[] max = determineMaximumSupportedFramerate(parameters);
             Camera.CameraInfo camInfo = new Camera.CameraInfo();
@@ -272,7 +273,9 @@ public class MediaStream {
     }
 
     private void save2file(byte[] data, String path) {
-        if (true) return;
+        /*if (true) {
+            return;
+        }*/
         try {
             FileOutputStream fos = new FileOutputStream(path, true);
             fos.write(data);
@@ -427,8 +430,9 @@ public class MediaStream {
                 ex.printStackTrace();
             }
         }
-        audioStream = new AudioStream(mEasyPusher);
-        audioStream.startRecord();
+        // TODO: 17-10-12 上午9:17 添加音频
+        /*audioStream = new AudioStream(mEasyPusher);
+        audioStream.startRecord();*/
     }
 
     @Provides

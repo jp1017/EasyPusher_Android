@@ -123,12 +123,10 @@ public class AudioStream {
                     while (t != null && t.isAlive()) {
                         try {
                             t.interrupt();
-                            t.join();
-                        } catch (InterruptedException e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
-                    ;
                     if (mAudioRecord != null) {
                         mAudioRecord.stop();
                         mAudioRecord.release();
@@ -188,8 +186,9 @@ public class AudioStream {
                     addADTStoPacket(mBuffer.array(), mBufferInfo.size + 7);
                     mBuffer.flip();
                     easyPusher.push(mBuffer.array(), 0, mBufferInfo.size + 7, mBufferInfo.presentationTimeUs / 1000, 0);
-                    if (BuildConfig.DEBUG)
+                    if (BuildConfig.DEBUG) {
                         Log.i(TAG, String.format("push audio stamp:%d", mBufferInfo.presentationTimeUs / 1000));
+                    }
                     mMediaCodec.releaseOutputBuffer(index, false);
                 } else if (index == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     mBuffers = mMediaCodec.getOutputBuffers();

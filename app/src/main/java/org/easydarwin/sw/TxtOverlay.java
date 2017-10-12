@@ -32,8 +32,7 @@ public class TxtOverlay {
         ctx = txtOverlayInit(width, height,fonts);
     }
 
-    public void overlay(byte[] data,
-                        String txt) {
+    public void overlay(byte[] data, String txt) {
 //        txt = "drawtext=fontfile="+context.getFileStreamPath("SIMYOU.ttf")+": text='EasyPusher 2017':x=(w-text_w)/2:y=H-60 :fontcolor=white :box=1:boxcolor=0x00000000@0.3";
 //        txt = "movie=/sdcard/qrcode.png [logo];[in][logo] "
 //                + "overlay=" + 0 + ":" + 0
